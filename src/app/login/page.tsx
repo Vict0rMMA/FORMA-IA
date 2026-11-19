@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -22,6 +22,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
   const [msg, setMsg] = useState<{ tone: "error" | "ok"; text: string } | null>(null);
 
   const submitting = useRef(false);
@@ -51,11 +52,13 @@ export default function LoginPage() {
     setLoading(true);
     setMsg(null);
     submitting.current = true;
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPw = password.trim();
     try {
       if (mode === "in") {
-        await signInWithEmailAndPassword(fb.auth, email.trim(), password);
+        await signInWithEmailAndPassword(fb.auth, cleanEmail, cleanPw);
       } else {
-        const cred = await createUserWithEmailAndPassword(fb.auth, email.trim(), password);
+        const cred = await createUserWithEmailAndPassword(fb.auth, cleanEmail, cleanPw);
         if (name.trim()) await updateProfile(cred.user, { displayName: name.trim() });
       }
       window.location.replace("/");
@@ -73,16 +76,41 @@ export default function LoginPage() {
       <p className="mt-1.5 text-sm text-muted">{mode === "in" ? "Entra para ver tu progreso." : "Tus datos se guardan de forma privada."}</p>
       <form onSubmit={submit} className="mt-8 space-y-3">
         {mode === "up" && <Input placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value)} required autoComplete="given-name" />}
-        <Input type="email" placeholder="Correo" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
         <Input
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          type="email"
+          inputMode="email"
+          placeholder="Correo"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
-          minLength={6}
-          autoComplete={mode === "in" ? "current-password" : "new-password"}
+          autoComplete="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
         />
+        <div className="relative">
+          <Input
+            type={showPw ? "text" : "password"}
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            autoComplete={mode === "in" ? "current-password" : "new-password"}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            className="pr-12"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPw((v) => !v)}
+            aria-label={showPw ? "Ocultar contraseña" : "Mostrar contraseña"}
+            className="absolute inset-y-0 right-0 grid w-12 place-items-center text-muted hover:text-fg"
+          >
+            {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
         {msg && <p className={`text-[13px] ${msg.tone === "error" ? "text-danger" : "text-lime"}`}>{msg.text}</p>}
         <button disabled={loading} className="flex h-12 w-full items-center justify-center rounded-full bg-lime font-semibold text-lime-ink transition-transform active:scale-[0.98] disabled:opacity-60">
           {loading ? <Loader2 size={18} className="animate-spin" /> : mode === "in" ? "Entrar" : "Crear cuenta"}
@@ -97,7 +125,7 @@ export default function LoginPage() {
             onClick={async () => {
               if (!email.trim()) return setMsg({ tone: "error", text: "Escribe tu correo arriba y vuelve a pulsar." });
               try {
-                await sendPasswordResetEmail(fb.auth, email.trim());
+                await sendPasswordResetEmail(fb.auth, email.trim().toLowerCase());
                 setMsg({ tone: "ok", text: "Te enviamos un correo para cambiar la contraseña." });
               } catch (err) {
                 setMsg({ tone: "error", text: authError(err) });
@@ -116,7 +144,7 @@ export default function LoginPage() {
 function authError(err: unknown): string {
   const code = (err as { code?: string })?.code ?? "";
   const map: Record<string, string> = {
-    "auth/invalid-credential": "Correo o contraseña incorrectos.",
+    "auth/invalid-credential": "Correo o contraseña incorrectos. Toca el ojo para revisar la contraseña (cuidado con las mayúsculas).",
     "auth/wrong-password": "Correo o contraseña incorrectos.",
     "auth/user-not-found": "No hay ninguna cuenta con ese correo.",
     "auth/email-already-in-use": "Ese correo ya tiene cuenta. Entra con él.",
