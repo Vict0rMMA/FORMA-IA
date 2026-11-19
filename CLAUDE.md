@@ -5,7 +5,7 @@ Víctor (usuario, habla español) pidió una app web personal de nutrición, cal
 ## Estado actual (19-nov-2026)
 - **En producción:** https://forma-ai-pearl.vercel.app (proyecto Vercel `forma-ai`).
 - **Datos en Firebase** (proyecto `forma-ai-victor`): login con correo y contraseña, y Firestore. Supabase se quitó por completo porque el plan gratis ya tenía 2 proyectos activos.
-- **IA:** Gemini (la misma clave de INGLES VICTOR). Probado en producción: el escáner por texto y el coach responden bien. Con fotos reales todavía no se ha probado desde el navegador.
+- **IA:** Gemini (la misma clave de INGLES VICTOR). Probado en producción: escáner por texto, coach y foto subida desde un celular simulado (una bandeja paisa: 9 alimentos en ~4 s).
 - Perfil por defecto de Víctor: 21 años, 184 cm, 87 kg. Se usa al crear la cuenta.
 - **Repo:** https://github.com/Vict0rMMA/FORMA-IA (rama `main`), conectado a Vercel: cada push a `main` publica en producción. Hacer commit y push solo cuando Víctor lo pida.
 
