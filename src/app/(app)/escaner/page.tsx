@@ -17,6 +17,16 @@ import { useStore } from "@/lib/store";
 import type { AnalyzeResponse, MealType } from "@/lib/types";
 import { authHeaders } from "@/lib/firebase/auth-headers";
 
+/** Mensaje claro según la respuesta del servidor. */
+function analyzeError(status: number, serverMsg?: string): string {
+  if (serverMsg) return serverMsg;
+  if (status === 401) return "Tu sesión expiró. Vuelve a entrar.";
+  if (status === 413) return "La foto pesa demasiado.";
+  if (status === 504) return "La IA tardó demasiado. Intenta otra vez.";
+  if (status === 0 || !navigator.onLine) return "Sin conexión a internet.";
+  return "Error al analizar. Intenta otra vez.";
+}
+
 type Phase = "input" | "analyzing" | "result" | "saved";
 
 export default function ScannerPage() {
@@ -51,9 +61,10 @@ function Scanner() {
         method: "POST",
         headers: await authHeaders(),
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(70_000),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Error al analizar");
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json) throw new Error(analyzeError(res.status, json?.error));
       const data = json as AnalyzeResponse;
       setMeta({ confidence: data.confidence, notes: data.notes, provider: data.provider });
       setResult({
@@ -66,7 +77,8 @@ function Scanner() {
       setDone(true);
       setTimeout(() => setPhase("result"), 450);
     } catch (e) {
-      toast.error("No se pudo analizar", { description: e instanceof Error ? e.message : undefined });
+      const msg = e instanceof DOMException && e.name === "TimeoutError" ? "La IA tardó demasiado. Intenta otra vez." : e instanceof Error ? e.message : undefined;
+      toast.error("No se pudo analizar", { description: msg });
       setPhase("input");
     }
   };
@@ -77,8 +89,8 @@ function Scanner() {
       setImage(dataUrl);
       setText(null);
       analyze({ image: dataUrl });
-    } catch {
-      toast.error("No pudimos leer esa imagen");
+    } catch (e) {
+      toast.error("No pudimos leer esa imagen", { description: e instanceof Error ? e.message : undefined });
     }
   };
 

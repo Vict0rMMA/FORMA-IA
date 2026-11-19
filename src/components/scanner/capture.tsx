@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Camera, ImageUp, Type } from "lucide-react";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { cn } from "@/lib/format";
 import { useMediaQuery } from "@/lib/hooks";
 import { CameraSheet } from "./camera-sheet";
@@ -19,7 +20,16 @@ export function Capture({ onImage, onText }: { onImage: (file: Blob) => void; on
 
   const pick = (files: FileList | null) => {
     const f = files?.[0];
-    if (f && f.type.startsWith("image/")) onImage(f);
+    if (!f) return;
+    // Algunos celulares entregan la foto sin tipo (HEIC, galerías en la nube): se intenta igual.
+    const isImage = f.type.startsWith("image/") || f.type === "" || /\.(jpe?g|png|webp|heic|heif|gif|avif)$/i.test(f.name);
+    if (isImage) onImage(f);
+    else toast.error("Ese archivo no es una imagen");
+  };
+  /** Limpia el input para poder elegir la misma foto otra vez. */
+  const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    pick(e.target.files);
+    e.target.value = "";
   };
 
   return (
@@ -59,8 +69,8 @@ export function Capture({ onImage, onText }: { onImage: (file: Blob) => void; on
             <ImageUp size={16} /> Subir imagen
           </button>
         </div>
-        <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => pick(e.target.files)} />
-        <input ref={camRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => pick(e.target.files)} />
+        <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPick} />
+        <input ref={camRef} type="file" accept="image/*" capture="environment" hidden onChange={onPick} />
       </motion.div>
 
       <div className="my-8 flex items-center gap-4">
