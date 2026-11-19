@@ -3,11 +3,11 @@
 Víctor (usuario, habla español) pidió una app web personal de nutrición, calorías y progreso físico, con aspecto de producto premium de startup fitness. Este archivo resume la sesión que la construyó (19-nov-2026).
 
 ## Estado actual (19-nov-2026)
-- **En producción:** https://forma-ai-pearl.vercel.app (proyecto Vercel `forma-ai`, desplegado con `npx vercel deploy --prod --yes`).
+- **En producción:** https://forma-ai-pearl.vercel.app (proyecto Vercel `forma-ai`).
 - **Datos en Firebase** (proyecto `forma-ai-victor`): login con correo y contraseña, y Firestore. Supabase se quitó por completo porque el plan gratis ya tenía 2 proyectos activos.
 - **IA:** Gemini (la misma clave de INGLES VICTOR). Probado en producción: el escáner por texto y el coach responden bien. Con fotos reales todavía no se ha probado desde el navegador.
 - Perfil por defecto de Víctor: 21 años, 184 cm, 87 kg. Se usa al crear la cuenta.
-- No hay repositorio git propio (la carpeta está dentro del repo de `C:\Users\victo`). No hacer commits sin que lo pida. **No conectar Git en Vercel:** `vercel link` enganchó el repo ParceroGO y hubo que desconectarlo.
+- **Repo:** https://github.com/Vict0rMMA/FORMA-IA (rama `main`), conectado a Vercel: cada push a `main` publica en producción. Hacer commit y push solo cuando Víctor lo pida.
 
 ## Stack
 Next.js 15.5 (App Router) · TypeScript · Tailwind 4 · Framer Motion · Recharts · Lucide · sonner · zod · firebase (Auth + Firestore) · @anthropic-ai/sdk · idb-keyval.
@@ -49,7 +49,7 @@ Next.js 15.5 (App Router) · TypeScript · Tailwind 4 · Framer Motion · Rechar
 1. Que Víctor cree su cuenta en producción y revisar el diseño en el celular.
 2. Probar el escáner con fotos reales.
 3. Las fotos se guardan como data URL dentro de Firestore (límite de 1 MB por documento). Si da problemas, pasarlas a Firebase Storage.
-4. Para redesplegar: `npx vercel deploy --prod --yes`. Las variables ya están en Vercel (producción).
+4. Para publicar: `git push` (Vercel despliega solo). Las variables ya están en Vercel (producción).
 
 ## Comandos
 `npm run dev` (puerto 3000) · `npm run build` · `npx tsc --noEmit` · `npx next lint`
