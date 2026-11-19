@@ -62,7 +62,15 @@ export function createFirebaseBackend(db: Firestore, auth: Auth, user: User): Ba
     userEmail: user.email,
 
     async load(): Promise<AppData> {
-      const profileSnap = await getDoc(root);
+      // Todo en paralelo: perfil y colecciones a la vez.
+      const [profileSnap, foods, weights, workouts, daily, photos] = await Promise.all([
+        getDoc(root),
+        all<FoodEntry>("foods"),
+        all<WeightLog>("weights"),
+        all<Workout>("workouts"),
+        all<DailyLog>("daily"),
+        all<ProgressPhoto>("photos"),
+      ]);
 
       if (!profileSnap.exists()) {
         const name = user.displayName || user.email?.split("@")[0] || "Atleta";
@@ -73,13 +81,6 @@ export function createFirebaseBackend(db: Firestore, auth: Auth, user: User): Ba
         return { ...fresh, weights: [firstWeight] };
       }
 
-      const [foods, weights, workouts, daily, photos] = await Promise.all([
-        all<FoodEntry>("foods"),
-        all<WeightLog>("weights"),
-        all<Workout>("workouts"),
-        all<DailyLog>("daily"),
-        all<ProgressPhoto>("photos"),
-      ]);
       const stored = profileSnap.data() as { profile: Profile; isDemo?: boolean };
 
       return {

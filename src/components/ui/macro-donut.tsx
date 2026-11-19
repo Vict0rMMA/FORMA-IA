@@ -32,7 +32,7 @@ export function MacroDonut({ m, size = 72, stroke = 9 }: { m: Macros; size?: num
             strokeDashoffset={-offset}
             initial={{ strokeDasharray: `0 ${c}` }}
             animate={{ strokeDasharray: `${len} ${c}` }}
-            transition={{ duration: 0.8, delay: 0.1 + i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.5, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
           />
         );
         offset += (p.v / total) * c;

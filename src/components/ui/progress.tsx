@@ -30,7 +30,7 @@ export function Bar({ value, max, color = "var(--color-lime)", className, delay 
         style={{ background: color, transformOrigin: "left" }}
         initial={{ scaleX: 0 }}
         animate={{ scaleX: pct }}
-        transition={{ duration: 0.9, delay, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }}
       />
     </div>
   );
@@ -64,7 +64,7 @@ export function Ring({
   const progress = useMotionValue(0);
   const dash = useTransform(progress, (p) => c * (1 - p));
   useEffect(() => {
-    const ctl = animate(progress, main, { duration: 1.2, ease: [0.22, 1, 0.36, 1] });
+    const ctl = animate(progress, main, { duration: 0.7, ease: [0.22, 1, 0.36, 1] });
     return () => ctl.stop();
   }, [main, progress]);
 
@@ -114,7 +114,7 @@ export function Ring({
             strokeDasharray={c}
             initial={{ strokeDashoffset: c }}
             animate={{ strokeDashoffset: c * (1 - over) }}
-            transition={{ duration: 0.8, delay: 1.1, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.4, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
           />
         )}
       </svg>

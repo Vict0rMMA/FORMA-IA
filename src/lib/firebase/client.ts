@@ -2,13 +2,7 @@
 
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, type Auth, type User } from "firebase/auth";
-import {
-  getFirestore,
-  initializeFirestore,
-  persistentLocalCache,
-  persistentMultipleTabManager,
-  type Firestore,
-} from "firebase/firestore";
+import { getFirestore, initializeFirestore, type Firestore } from "firebase/firestore";
 import { firebaseConfig, firebaseEnabled } from "./config";
 
 let cached: { auth: Auth; db: Firestore } | null = null;
@@ -20,11 +14,8 @@ export function getFirebase(): { auth: Auth; db: Firestore } | null {
   const app = fresh ? initializeApp(firebaseConfig) : getApp();
   let db: Firestore;
   try {
-    // Caché en IndexedDB: la app abre rápido y sigue funcionando sin conexión.
-    db = initializeFirestore(app, {
-      ignoreUndefinedProperties: true,
-      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-    });
+    // Caché en memoria: arranca más rápido. La copia para abrir al instante la guarda el store en IndexedDB.
+    db = initializeFirestore(app, { ignoreUndefinedProperties: true });
   } catch {
     db = getFirestore(app);
   }
@@ -43,7 +34,7 @@ export function currentUser(auth: Auth): Promise<User | null> {
 }
 
 /** Cabeceras para las rutas /api: añade el token de Firebase si hay sesión. */
-export async function authHeaders(): Promise<Record<string, string>> {
+export async function authHeadersImpl(): Promise<Record<string, string>> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   const fb = getFirebase();
   const user = fb?.auth.currentUser;

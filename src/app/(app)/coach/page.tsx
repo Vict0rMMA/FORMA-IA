@@ -8,7 +8,7 @@ import { buildCoachContext } from "@/lib/coach-context";
 import { cn, n0, uid } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import type { ChatMessage, CoachCard } from "@/lib/types";
-import { authHeaders } from "@/lib/firebase/client";
+import { authHeaders } from "@/lib/firebase/auth-headers";
 
 const STARTERS = [
   "¿Cuántas calorías me quedan?",

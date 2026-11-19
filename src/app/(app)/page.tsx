@@ -22,7 +22,7 @@ import type { FoodEntry, Macros, Profile } from "@/lib/types";
 const rise = (i: number) => ({
   initial: { opacity: 0, y: 12 },
   animate: { opacity: 1, y: 0 },
-  transition: { delay: 0.05 + i * 0.07, duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
+  transition: { delay: i * 0.035, duration: 0.28, ease: [0.22, 1, 0.36, 1] as const },
 });
 
 function tagline(p: Profile, consumed: Macros, targets: Macros, latestKg: number): string {

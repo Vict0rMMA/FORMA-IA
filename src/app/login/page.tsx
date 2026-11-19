@@ -131,7 +131,7 @@ function authError(err: unknown): string {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="grid min-h-dvh place-items-center px-6">
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-sm">
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="w-full max-w-sm">
         <div className="mb-12">
           <Logo />
         </div>

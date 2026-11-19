@@ -4,8 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { toast } from "sonner";
 import type { Backend } from "./data/backend";
 import { createLocalBackend } from "./data/local-backend";
-import { createFirebaseBackend } from "./data/firebase-backend";
-import { currentUser, getFirebase } from "./firebase/client";
+import { get as idbGet, set as idbSet, del as idbDel } from "idb-keyval";
+import { firebaseEnabled } from "./firebase/config";
 import { computeTargets } from "./nutrition";
 import { todayKey } from "./dates";
 import { uid } from "./format";
@@ -36,6 +36,9 @@ interface Store {
 
 const Ctx = createContext<Store | null>(null);
 
+const CLOUD_CACHE_KEY = "forma-ai:cloud-cache:v1";
+type CloudCache = { data: AppData; email: string | null };
+
 export function useStore(): Store {
   const s = useContext(Ctx);
   if (!s) throw new Error("useStore fuera de StoreProvider");
@@ -45,29 +48,63 @@ export function useStore(): Store {
 export function StoreProvider({ children, fallback }: { children: ReactNode; fallback: ReactNode }) {
   const [data, setData] = useState<AppData | null>(null);
   const backendRef = useRef<Backend | null>(null);
+  /** Cambios hechos antes de que la nube esté lista: se envían en cuanto conecta. */
+  const pendingRef = useRef<((b: Backend) => Promise<void>)[]>([]);
+  const [mode, setMode] = useState<Backend["kind"]>(firebaseEnabled ? "cloud" : "local");
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
+    let shownCache = false;
     (async () => {
       try {
-        const fb = getFirebase();
-        let backend: Backend;
-        if (fb) {
-          const user = await currentUser(fb.auth);
-          if (!user) {
-            window.location.replace("/login");
-            return;
-          }
-          backend = createFirebaseBackend(fb.db, fb.auth, user);
-        } else {
-          backend = createLocalBackend();
+        if (!firebaseEnabled) {
+          const backend = createLocalBackend();
+          backendRef.current = backend;
+          setMode("local");
+          const loaded = await backend.load();
+          if (alive) setData(loaded);
+          return;
         }
+
+        // 1) Pintar al instante con la última copia guardada en este dispositivo.
+        const cached = await idbGet<CloudCache>(CLOUD_CACHE_KEY).catch(() => undefined);
+        if (cached?.data && alive) {
+          shownCache = true;
+          setData(cached.data);
+          setUserEmail(cached.email);
+        }
+
+        // 2) Firebase se descarga después del primer pintado.
+        const [{ getFirebase, currentUser }, { createFirebaseBackend }] = await Promise.all([
+          import("./firebase/client"),
+          import("./data/firebase-backend"),
+        ]);
+        const fb = getFirebase()!;
+        const user = await currentUser(fb.auth);
+        if (!user) {
+          await idbDel(CLOUD_CACHE_KEY).catch(() => {});
+          window.location.replace("/login");
+          return;
+        }
+        const backend = createFirebaseBackend(fb.db, fb.auth, user);
         backendRef.current = backend;
-        const loaded = await backend.load();
-        if (alive) setData(loaded);
+        setUserEmail(user.email);
+
+        // 3) Enviar lo que se cambió mientras tanto y traer la versión de la nube.
+        const pending = pendingRef.current.splice(0);
+        await Promise.all(pending.map((fn) => fn(backend).catch(() => {})));
+        const fresh = await backend.load();
+        if (!alive) return;
+        setData(fresh);
+        cacheOwner.current = user.uid;
       } catch (e) {
-        if (alive) setError(e instanceof Error ? e.message : "No se pudieron cargar tus datos");
+        if (!alive) return;
+        const msg = e instanceof Error ? e.message : "No se pudieron cargar tus datos";
+        // Con copia local seguimos funcionando; sin ella mostramos el error.
+        if (shownCache) toast.error("Sin conexión con la nube", { description: "Mostrando tu última copia guardada." });
+        else setError(msg);
       }
     })();
     return () => {
@@ -75,14 +112,24 @@ export function StoreProvider({ children, fallback }: { children: ReactNode; fal
     };
   }, []);
 
-  // Modo local: cada cambio se guarda como instantánea en IndexedDB.
+  const cacheOwner = useRef<string | null>(null);
+
+  // Guarda una copia: en modo local es el almacenamiento; en la nube, la caché para abrir rápido.
   useEffect(() => {
-    if (data && backendRef.current?.snapshot) backendRef.current.snapshot(data);
-  }, [data]);
+    if (!data) return;
+    if (backendRef.current?.snapshot) backendRef.current.snapshot(data);
+    else if (firebaseEnabled && cacheOwner.current) {
+      const t = setTimeout(() => idbSet(CLOUD_CACHE_KEY, { data, email: userEmail } satisfies CloudCache).catch(() => {}), 400);
+      return () => clearTimeout(t);
+    }
+  }, [data, userEmail]);
 
   const sync = useCallback((fn: (b: Backend) => Promise<void>) => {
     const b = backendRef.current;
-    if (!b) return;
+    if (!b) {
+      pendingRef.current.push(fn);
+      return;
+    }
     fn(b).catch((e) => toast.error("No se pudo sincronizar", { description: e instanceof Error ? e.message : String(e) }));
   }, []);
 
@@ -93,8 +140,8 @@ export function StoreProvider({ children, fallback }: { children: ReactNode; fal
     return {
       data,
       targets: computeTargets(data.profile),
-      mode: backendRef.current?.kind ?? "local",
-      userEmail: backendRef.current?.userEmail ?? null,
+      mode,
+      userEmail,
 
       updateProfile(patch) {
         const profile = { ...data.profile, ...patch };
@@ -187,11 +234,12 @@ export function StoreProvider({ children, fallback }: { children: ReactNode; fal
       },
 
       async signOut() {
+        await idbDel(CLOUD_CACHE_KEY).catch(() => {});
         await backendRef.current?.signOut?.();
         window.location.href = "/login";
       },
     };
-  }, [data, mutate, sync]);
+  }, [data, mode, userEmail, mutate, sync]);
 
   if (error)
     return (

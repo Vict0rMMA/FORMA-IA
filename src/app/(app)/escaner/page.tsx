@@ -15,7 +15,7 @@ import { compressImage, makeThumb } from "@/lib/image";
 import { MEAL_LABELS, mealForHour, toPer100 } from "@/lib/nutrition";
 import { useStore } from "@/lib/store";
 import type { AnalyzeResponse, MealType } from "@/lib/types";
-import { authHeaders } from "@/lib/firebase/client";
+import { authHeaders } from "@/lib/firebase/auth-headers";
 
 type Phase = "input" | "analyzing" | "result" | "saved";
 

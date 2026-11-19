@@ -27,7 +27,7 @@ export function CalorieHero({ consumed, target }: { consumed: number; target: nu
         className="mt-8 grid w-full max-w-sm grid-cols-3 divide-x divide-line"
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35, duration: 0.5 }}
+        transition={{ delay: 0.15, duration: 0.3 }}
       >
         <Stat label="Consumidas" value={consumed} />
         <Stat label={over ? "Exceso" : "Restantes"} value={Math.abs(remaining)} accent={!over} />

@@ -44,7 +44,7 @@ export function Result({
 
   return (
     <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
-      <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="lg:sticky lg:top-10 lg:self-start">
+      <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.25 }} className="lg:sticky lg:top-10 lg:self-start">
         {image ? (
           <img src={image} alt={state.title} className="aspect-[4/3] w-full rounded-[28px] border border-line object-cover" />
         ) : (

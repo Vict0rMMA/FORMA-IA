@@ -139,9 +139,9 @@ function WorkoutRow({ w, defaultOpen = false }: { w: Workout; defaultOpen?: bool
                 <Pill>{n0(w.kcal)} kcal</Pill>
               </div>
               {w.exercises.map((e) => (
-                <div key={e.id} className="flex items-baseline justify-between gap-3 text-[13px]">
-                  <span className="truncate">{e.name}</span>
-                  <span className="num shrink-0 text-muted">
+                <div key={e.id} className="flex flex-col gap-0.5 text-[13px] sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+                  <span className="sm:truncate">{e.name}</span>
+                  <span className="num text-muted sm:shrink-0">
                     {e.sets
                       .filter((s) => s.done)
                       .map((s) => (s.weight ? `${s.weight}×${s.reps}` : `${s.reps}`))
