@@ -1,0 +1,13 @@
+rules_version = '2';
+// FORMA AI: cada usuario solo puede leer y escribir dentro de users/{suUid}.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      match /{collection}/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId
+          && collection in ['foods', 'weights', 'workouts', 'daily', 'photos'];
+      }
+    }
+  }
+}
